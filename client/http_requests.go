@@ -126,3 +126,66 @@ func (c *HTTPClient) GetTransferFeeInfo(accountIndex, toAccountIndex int64, auth
 	}
 	return result, nil
 }
+
+func (c *HTTPClient) GetAccount(accountIndex int64, auth string) (*DetailedAccountsResponse, error) {
+	result := &DetailedAccountsResponse{}
+	err := c.getAndParseL2HTTPResponse("api/v1/account", map[string]any{
+		"by":    "index",
+		"value": fmt.Sprintf("%d", accountIndex),
+		"auth":  auth,
+	}, result)
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+
+func (c *HTTPClient) GetAccountByL1Address(l1Address string) (*DetailedAccountsResponse, error) {
+	result := &DetailedAccountsResponse{}
+	err := c.getAndParseL2HTTPResponse("api/v1/accountsByL1Address", map[string]any{
+		"l1_address": l1Address,
+	}, result)
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+
+
+func (c *HTTPClient) GetOrderBooks() (*OrderBookResponse, error) {
+	result := &OrderBookResponse{}
+	err := c.getAndParseL2HTTPResponse("api/v1/orderBooks", map[string]any{}, result)
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+
+func (c *HTTPClient) GetActiveOrders(accountIndex int64, marketId uint8, auth string) (*OrdersResponse, error) {
+	result := &OrdersResponse{}
+	err := c.getAndParseL2HTTPResponse("api/v1/accountActiveOrders", map[string]any{
+		"account_index": accountIndex,
+		"market_id":     marketId,
+		"auth":          auth,
+	}, result)
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+
+func (c *HTTPClient) GetInactiveOrders(accountIndex int64, marketId uint8, auth string) (*OrdersResponse, error) {
+	result := &OrdersResponse{}
+	params := map[string]any{
+		"account_index": accountIndex,
+		"auth":          auth,
+	}
+	if marketId != 255 { // 255 means all markets
+		params["market_id"] = marketId
+	}
+	err := c.getAndParseL2HTTPResponse("api/v1/accountInactiveOrders", params, result)
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
+}
