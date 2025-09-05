@@ -4,11 +4,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
 )
 
-// Market Data Streams
+// Market Data Streams (DEPRECATED - use LighterWebsocketClient instead)
 
 // StreamOrderBook subscribes to order book updates for a market ID
+// DEPRECATED: Use LighterWebsocketClient.Public().SubscribeOrderBook() instead
 func (ws *WSClient) StreamOrderBook(ctx context.Context, marketId uint8, callback func(*WSOrderBookUpdate) error) error {
 	handler := func(data []byte) error {
 		var response struct {
@@ -27,8 +29,8 @@ func (ws *WSClient) StreamOrderBook(ctx context.Context, marketId uint8, callbac
 		return callback(response.Data)
 	}
 	
-	ws.AddHandler(ChannelOrderBook, handler)
-	return ws.Subscribe(ChannelOrderBook, fmt.Sprintf("%d", marketId))
+	ws.AddHandler(MessageTypeOrderBook, handler)
+	return ws.Subscribe(fmt.Sprintf("%s/%d", ChannelOrderBook, marketId), "")
 }
 
 // StreamTicker subscribes to ticker updates for a market ID
@@ -50,8 +52,8 @@ func (ws *WSClient) StreamTicker(ctx context.Context, marketId uint8, callback f
 		return callback(response.Data)
 	}
 	
-	ws.AddHandler(ChannelTicker, handler)
-	return ws.Subscribe(ChannelTicker, fmt.Sprintf("%d", marketId))
+	ws.AddHandler(ChannelTicker, handler)  
+	return ws.Subscribe(fmt.Sprintf("%s/%d", ChannelTicker, marketId), "")
 }
 
 // StreamTrades subscribes to trade updates for a market ID
@@ -74,7 +76,7 @@ func (ws *WSClient) StreamTrades(ctx context.Context, marketId uint8, callback f
 	}
 	
 	ws.AddHandler(ChannelTrades, handler)
-	return ws.Subscribe(ChannelTrades, fmt.Sprintf("%d", marketId))
+	return ws.Subscribe(fmt.Sprintf("%s/%d", ChannelTrades, marketId), "")
 }
 
 // StreamMarkPrice subscribes to mark price updates for a market ID
@@ -97,95 +99,71 @@ func (ws *WSClient) StreamMarkPrice(ctx context.Context, marketId uint8, callbac
 	}
 	
 	ws.AddHandler(ChannelMarkPrice, handler)
-	return ws.Subscribe(ChannelMarkPrice, fmt.Sprintf("%d", marketId))
+	return ws.Subscribe(fmt.Sprintf("%s/%d", ChannelMarkPrice, marketId), "")
 }
 
-// Account Data Streams (require authentication)
+// Account Data Streams
 
-// StreamAccount subscribes to account balance updates
-func (ws *WSClient) StreamAccount(ctx context.Context, callback func(*WSAccountUpdate) error) error {
-	if ws.authToken == "" {
-		return fmt.Errorf("authentication token required for account streams")
-	}
+// Deprecated: StreamAccount is deprecated in favor of the new Bybit-style architecture
+// Use LighterWebsocketPrivateService.SubscribeAccount() instead
+func (ws *WSClient) StreamAccount(ctx context.Context, accountId int64, callback func(*WSAccountUpdate) error) error {
+	// Note: Based on Python implementation, account streams don't require authentication
+	// The account_id itself serves as the access control
 	
 	handler := func(data []byte) error {
-		var response struct {
-			Type string            `json:"type"`
-			Data *WSAccountUpdate  `json:"data"`
-		}
+		var accountUpdate WSAccountUpdate
 		
-		if err := json.Unmarshal(data, &response); err != nil {
+		if err := json.Unmarshal(data, &accountUpdate); err != nil {
 			return fmt.Errorf("failed to unmarshal account update: %v", err)
 		}
 		
-		if response.Type != ChannelAccount || response.Data == nil {
+		// Check if it's an account message (either snapshot or update)
+		if accountUpdate.Type != MessageTypeAccount && accountUpdate.Type != MessageTypeAccountSubscribed {
 			return nil
 		}
 		
-		return callback(response.Data)
+		return callback(&accountUpdate)
 	}
 	
-	ws.AddHandler(ChannelAccount, handler)
-	return ws.Subscribe(ChannelAccount, "")
+	// Register handlers for both snapshot and update messages
+	ws.AddHandler(MessageTypeAccount, handler)
+	ws.AddHandler(MessageTypeAccountSubscribed, handler)
+	return ws.Subscribe(fmt.Sprintf("%s/%d", ChannelAccount, accountId), "")
 }
 
-// StreamOrders subscribes to order status updates
-func (ws *WSClient) StreamOrders(ctx context.Context, callback func(*WSOrderUpdate) error) error {
-	if ws.authToken == "" {
-		return fmt.Errorf("authentication token required for order streams")
-	}
-	
-	handler := func(data []byte) error {
-		var response struct {
-			Type string         `json:"type"`
-			Data *WSOrderUpdate `json:"data"`
-		}
-		
-		if err := json.Unmarshal(data, &response); err != nil {
-			return fmt.Errorf("failed to unmarshal order update: %v", err)
-		}
-		
-		if response.Type != ChannelOrders || response.Data == nil {
-			return nil
-		}
-		
-		return callback(response.Data)
-	}
-	
-	ws.AddHandler(ChannelOrders, handler)
-	return ws.Subscribe(ChannelOrders, "")
-}
+// Note: StreamOrders is deprecated - orders are handled through StreamAccount
+// Use StreamAccount instead, which includes order updates, positions, and balance changes
 
 // Unsubscribe methods
 
 // UnsubscribeOrderBook unsubscribes from order book updates
 func (ws *WSClient) UnsubscribeOrderBook(marketId uint8) error {
-	ws.RemoveHandler(ChannelOrderBook)
-	return ws.Unsubscribe(ChannelOrderBook, fmt.Sprintf("%d", marketId))
+	ws.RemoveHandler(MessageTypeOrderBook)
+	return ws.Unsubscribe(fmt.Sprintf("%s/%d", ChannelOrderBook, marketId), "")
 }
 
 // UnsubscribeTicker unsubscribes from ticker updates
 func (ws *WSClient) UnsubscribeTicker(marketId uint8) error {
 	ws.RemoveHandler(ChannelTicker)
-	return ws.Unsubscribe(ChannelTicker, fmt.Sprintf("%d", marketId))
+	return ws.Unsubscribe(fmt.Sprintf("%s/%d", ChannelTicker, marketId), "")
 }
 
 // UnsubscribeTrades unsubscribes from trade updates
 func (ws *WSClient) UnsubscribeTrades(marketId uint8) error {
 	ws.RemoveHandler(ChannelTrades)
-	return ws.Unsubscribe(ChannelTrades, fmt.Sprintf("%d", marketId))
+	return ws.Unsubscribe(fmt.Sprintf("%s/%d", ChannelTrades, marketId), "")
 }
 
 // UnsubscribeMarkPrice unsubscribes from mark price updates
 func (ws *WSClient) UnsubscribeMarkPrice(marketId uint8) error {
 	ws.RemoveHandler(ChannelMarkPrice)
-	return ws.Unsubscribe(ChannelMarkPrice, fmt.Sprintf("%d", marketId))
+	return ws.Unsubscribe(fmt.Sprintf("%s/%d", ChannelMarkPrice, marketId), "")
 }
 
 // UnsubscribeAccount unsubscribes from account updates
-func (ws *WSClient) UnsubscribeAccount() error {
-	ws.RemoveHandler(ChannelAccount)
-	return ws.Unsubscribe(ChannelAccount, "")
+func (ws *WSClient) UnsubscribeAccount(accountId int64) error {
+	ws.RemoveHandler(MessageTypeAccount)
+	return ws.Unsubscribe(fmt.Sprintf("%s/%d", ChannelAccount, accountId), "")
 }
 
 // UnsubscribeOrders unsubscribes from order updates
@@ -194,33 +172,59 @@ func (ws *WSClient) UnsubscribeOrders() error {
 	return ws.Unsubscribe(ChannelOrders, "")
 }
 
+// Batch subscription convenience methods
+
+// StreamMultiple subscribes to multiple streams at once using batch subscription
+// This is more efficient than calling individual Stream methods
+// Example usage:
+//   subscriptions := []SubscriptionRequest{
+//       NewOrdersSubscription(),
+//       NewAccountSubscription(accountId),
+//       NewOrderBookSubscription(1),
+//       NewTickerSubscription(2),
+//   }
+//   ws.StreamMultiple(ctx, subscriptions, handlers)
+func (ws *WSClient) StreamMultiple(ctx context.Context, requests []SubscriptionRequest, handlers map[string]WSHandler) error {
+	// Add all handlers first
+	for channel, handler := range handlers {
+		ws.AddHandler(channel, handler)
+	}
+	
+	// Batch subscribe to all channels
+	return ws.SubscribeMultiple(requests)
+}
+
 // Utility methods for data conversion
 
 // ConvertWSOrderBookToKubi converts WebSocket order book data to kubi format
-func ConvertWSOrderBookToKubi(wsData *WSOrderBookUpdate, marketId uint8) (*OrderBookResponse, error) {
-	orderBooks := make([]OrderBook, 0, 1)
+func ConvertWSOrderBookToKubi(wsData *WSOrderBookUpdate, marketId uint8) (*OrderBookDataResponse, error) {
+	orderBooks := make([]OrderBookData, 0, 1)
 	
 	bids := make([]PriceLevel, 0, len(wsData.Bids))
-	for _, bid := range wsData.Bids {
-		if len(bid) >= 2 {
-			bids = append(bids, PriceLevel{
-				Price:    bid[0],
-				Quantity: bid[1],
-			})
+	for i, bid := range wsData.Bids {
+		if len(bid) < 2 {
+			log.Printf("[WSClient] Warning: bid[%d] has insufficient length %d, skipping", i, len(bid))
+			continue
 		}
+		bids = append(bids, PriceLevel{
+			Price:    bid[0],
+			Quantity: bid[1],
+		})
 	}
 	
 	asks := make([]PriceLevel, 0, len(wsData.Asks))
-	for _, ask := range wsData.Asks {
-		if len(ask) >= 2 {
-			asks = append(asks, PriceLevel{
-				Price:    ask[0],
-				Quantity: ask[1],
-			})
+	for i, ask := range wsData.Asks {
+		if len(ask) < 2 {
+			log.Printf("[WSClient] Warning: ask[%d] has insufficient length %d, skipping", i, len(ask))
+			continue
 		}
+		asks = append(asks, PriceLevel{
+			Price:    ask[0],
+			Quantity: ask[1],
+		})
 	}
 	
-	orderBook := OrderBook{
+	orderBook := OrderBookData{
 		MarketId: marketId, // Use provided market ID directly
 		Bids:     bids,
 		Asks:     asks,
@@ -228,7 +232,7 @@ func ConvertWSOrderBookToKubi(wsData *WSOrderBookUpdate, marketId uint8) (*Order
 	
 	orderBooks = append(orderBooks, orderBook)
 	
-	return &OrderBookResponse{
+	return &OrderBookDataResponse{
 		ResultCode: ResultCode{Code: CodeOK},
 		OrderBooks: orderBooks,
 	}, nil
