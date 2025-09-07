@@ -2,7 +2,6 @@ package client
 
 import (
 	"context"
-	"fmt"
 	"time"
 )
 
@@ -24,36 +23,7 @@ type WSUnsubscribeMessage struct {
 	Symbol  string `json:"symbol,omitempty"`
 }
 
-// SubscriptionRequest represents a single subscription request for batch operations
-type SubscriptionRequest struct {
-	Channel   string `json:"channel"`
-	Symbol    string `json:"symbol,omitempty"`    // Optional, for market data streams
-	AccountId int64  `json:"account_id,omitempty"` // Optional, for account streams
-}
-
-// Helper methods to create subscription requests
-func NewOrderBookSubscription(marketId uint8) SubscriptionRequest {
-	return SubscriptionRequest{
-		Channel: fmt.Sprintf("order_book/%d", marketId),
-	}
-}
-
-func NewAccountSubscription(accountId int64) SubscriptionRequest {
-	return SubscriptionRequest{
-		Channel:   fmt.Sprintf("account_all/%d", accountId),
-		AccountId: accountId,
-	}
-}
-
-// Note: Orders are handled through account subscriptions, no separate orders channel needed
-
-// Ticker subscription removed - Lighter doesn't support ticker channel
-
-func NewTradesSubscription(marketId uint8) SubscriptionRequest {
-	return SubscriptionRequest{
-		Channel: fmt.Sprintf("trades/%d", marketId),
-	}
-}
+// Note: SubscriptionRequest and related helper functions removed as they were unused
 
 // Market data types
 type WSOrderBookUpdate struct {
@@ -63,22 +33,8 @@ type WSOrderBookUpdate struct {
 	Timestamp int64      `json:"timestamp"`
 }
 
-type WSTickerUpdate struct {
-	Symbol    string `json:"symbol"`
-	Bid       string `json:"bid"`
-	Ask       string `json:"ask"`
-	BidSize   string `json:"bid_size"`
-	AskSize   string `json:"ask_size"`
-	Timestamp int64  `json:"timestamp"`
-}
-
-type WSTradeUpdate struct {
-	Symbol    string `json:"symbol"`
-	Price     string `json:"price"`
-	Quantity  string `json:"quantity"`
-	Side      string `json:"side"`
-	Timestamp int64  `json:"timestamp"`
-}
+// Note: WSTickerUpdate and WSTradeUpdate types removed because 
+// ticker and trade streams are not supported by Lighter WebSocket API
 
 // Account data types
 type WSAccountUpdate struct {
@@ -161,13 +117,15 @@ type WSOrderUpdate struct {
 }
 
 // Channel constants - based on Python implementation
+// Note: Only order_book and account_all are actually supported by Lighter WebSocket API
 const (
 	ChannelOrderBook = "order_book"
-	ChannelTicker    = "ticker"
-	ChannelTrades    = "trades"
 	ChannelAccount   = "account_all"
 	ChannelOrders    = "orders"
-	ChannelMarkPrice = "markprice"
+	// The following channels are not supported by Lighter WebSocket API:
+	// ChannelTicker    = "ticker"      // REMOVED - not supported
+	// ChannelTrades    = "trades"      // REMOVED - not supported  
+	// ChannelMarkPrice = "markprice"   // REMOVED - not supported
 )
 
 // Message types - based on Python implementation

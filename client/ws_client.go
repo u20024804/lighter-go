@@ -206,75 +206,7 @@ func (ws *WSClient) Unsubscribe(channel, symbol string) error {
 	return ws.sendMessage(msg)
 }
 
-// SubscribeMultiple subscribes to multiple channels in a batch
-// This reduces the number of messages sent compared to individual Subscribe calls
-func (ws *WSClient) SubscribeMultiple(requests []SubscriptionRequest) error {
-	ws.mu.Lock()
-	defer ws.mu.Unlock()
-
-	if !ws.isConnected {
-		return fmt.Errorf("WebSocket not connected")
-	}
-
-	// Track subscriptions locally first
-	for _, req := range requests {
-		subscriptionKey := req.Channel
-		if req.Symbol != "" {
-			subscriptionKey = fmt.Sprintf("%s:%s", req.Channel, req.Symbol)
-		}
-		ws.subscriptions[subscriptionKey] = true
-	}
-
-	// Send batch subscription messages
-	for _, req := range requests {
-		msg := WSSubscribeMessage{
-			Type:    MessageTypeSubscribe,
-			Channel: req.Channel,
-			Symbol:  req.Symbol,
-		}
-
-		log.Printf("[WSClient] Batch subscribing to channel: %s (symbol: %s)", req.Channel, req.Symbol)
-		if err := ws.sendMessage(msg); err != nil {
-			return fmt.Errorf("failed to send subscription for channel %s: %v", req.Channel, err)
-		}
-	}
-
-	return nil
-}
-
-// UnsubscribeMultiple unsubscribes from multiple channels in a batch
-func (ws *WSClient) UnsubscribeMultiple(requests []SubscriptionRequest) error {
-	ws.mu.Lock()
-	defer ws.mu.Unlock()
-
-	// Remove subscriptions locally first
-	for _, req := range requests {
-		subscriptionKey := req.Channel
-		if req.Symbol != "" {
-			subscriptionKey = fmt.Sprintf("%s:%s", req.Channel, req.Symbol)
-		}
-		delete(ws.subscriptions, subscriptionKey)
-	}
-
-	if !ws.isConnected {
-		return nil // Already disconnected
-	}
-
-	// Send batch unsubscription messages
-	for _, req := range requests {
-		msg := WSUnsubscribeMessage{
-			Type:    MessageTypeUnsubscribe,
-			Channel: req.Channel,
-			Symbol:  req.Symbol,
-		}
-
-		if err := ws.sendMessage(msg); err != nil {
-			return fmt.Errorf("failed to send unsubscription for channel %s: %v", req.Channel, err)
-		}
-	}
-
-	return nil
-}
+// Note: SubscribeMultiple and UnsubscribeMultiple methods removed as they were unused
 
 // AddHandler adds a message handler for a specific channel
 func (ws *WSClient) AddHandler(channel string, handler WSHandler) {
