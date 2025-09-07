@@ -266,3 +266,462 @@ func (c *HTTPClient) GetFundingRates() (*FundingRatesResponse, error) {
 	}
 	return result, nil
 }
+
+// ============= Phase 1: Core Data Query Methods =============
+
+// GetCandlesticks retrieves candlestick data for a market
+func (c *HTTPClient) GetCandlesticks(marketId uint8, resolution string, startTimestamp, endTimestamp int64, countBack int32, setTimestampToEnd *bool) (*CandlesticksResponse, error) {
+	result := &CandlesticksResponse{}
+	params := map[string]any{
+		"market_id":       marketId,
+		"resolution":      resolution,
+		"start_timestamp": startTimestamp,
+		"end_timestamp":   endTimestamp,
+		"count_back":      countBack,
+	}
+	if setTimestampToEnd != nil {
+		params["set_timestamp_to_end"] = *setTimestampToEnd
+	}
+	err := c.getAndParseL2HTTPResponse("api/v1/candlesticks", params, result)
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+
+// GetFundings retrieves funding history data for a market
+func (c *HTTPClient) GetFundings(marketId uint8, startTimestamp, endTimestamp *int64, limit *int32) (*FundingsResponse, error) {
+	result := &FundingsResponse{}
+	params := map[string]any{
+		"market_id": marketId,
+	}
+	if startTimestamp != nil {
+		params["start_timestamp"] = *startTimestamp
+	}
+	if endTimestamp != nil {
+		params["end_timestamp"] = *endTimestamp
+	}
+	if limit != nil {
+		params["limit"] = *limit
+	}
+	err := c.getAndParseL2HTTPResponse("api/v1/fundings", params, result)
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+
+// GetRecentTrades retrieves recent trades for a market
+func (c *HTTPClient) GetRecentTrades(marketId uint8, limit *int32) (*RecentTradesResponse, error) {
+	result := &RecentTradesResponse{}
+	params := map[string]any{
+		"market_id": marketId,
+	}
+	if limit != nil {
+		params["limit"] = *limit
+	}
+	err := c.getAndParseL2HTTPResponse("api/v1/recentTrades", params, result)
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+
+// GetTrades retrieves trade history for a market or account
+func (c *HTTPClient) GetTrades(marketId *uint8, accountIndex *int64, startTimestamp, endTimestamp *int64, limit *int32, auth *string) (*TradesResponse, error) {
+	result := &TradesResponse{}
+	params := map[string]any{}
+	
+	if marketId != nil {
+		params["market_id"] = *marketId
+	}
+	if accountIndex != nil {
+		params["account_index"] = *accountIndex
+	}
+	if startTimestamp != nil {
+		params["start_timestamp"] = *startTimestamp
+	}
+	if endTimestamp != nil {
+		params["end_timestamp"] = *endTimestamp
+	}
+	if limit != nil {
+		params["limit"] = *limit
+	}
+	if auth != nil {
+		params["auth"] = *auth
+	}
+	
+	err := c.getAndParseL2HTTPResponse("api/v1/trades", params, result)
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+
+// GetExchangeStats retrieves exchange-wide statistics
+func (c *HTTPClient) GetExchangeStats() (*ExchangeStatsResponse, error) {
+	result := &ExchangeStatsResponse{}
+	err := c.getAndParseL2HTTPResponse("api/v1/exchangeStats", map[string]any{}, result)
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+
+// GetExport retrieves data export information
+func (c *HTTPClient) GetExport(accountIndex int64, dataType string, startDate, endDate string, auth string) (*ExportResponse, error) {
+	result := &ExportResponse{}
+	params := map[string]any{
+		"account_index": accountIndex,
+		"data_type":     dataType,
+		"start_date":    startDate,
+		"end_date":      endDate,
+		"auth":          auth,
+	}
+	err := c.getAndParseL2HTTPResponse("api/v1/export", params, result)
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+
+// ============= Phase 2: Account Management Methods =============
+
+// GetAccountLimits retrieves account trading limits and restrictions
+func (c *HTTPClient) GetAccountLimits(accountIndex int64, auth string) (*AccountLimitsResponse, error) {
+	result := &AccountLimitsResponse{}
+	params := map[string]any{
+		"account_index": accountIndex,
+		"auth":          auth,
+	}
+	err := c.getAndParseL2HTTPResponse("api/v1/accountLimits", params, result)
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+
+// GetAccountMetadata retrieves extended account information
+func (c *HTTPClient) GetAccountMetadata(accountIndex int64, auth string) (*AccountMetadataResponse, error) {
+	result := &AccountMetadataResponse{}
+	params := map[string]any{
+		"account_index": accountIndex,
+		"auth":          auth,
+	}
+	err := c.getAndParseL2HTTPResponse("api/v1/accountMetadata", params, result)
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+
+// GetLiquidations retrieves liquidation history for an account
+func (c *HTTPClient) GetLiquidations(accountIndex int64, marketId *uint8, startTimestamp, endTimestamp *int64, limit *int32, auth string) (*LiquidationsResponse, error) {
+	result := &LiquidationsResponse{}
+	params := map[string]any{
+		"account_index": accountIndex,
+		"auth":          auth,
+	}
+	if marketId != nil {
+		params["market_id"] = *marketId
+	}
+	if startTimestamp != nil {
+		params["start_timestamp"] = *startTimestamp
+	}
+	if endTimestamp != nil {
+		params["end_timestamp"] = *endTimestamp
+	}
+	if limit != nil {
+		params["limit"] = *limit
+	}
+	err := c.getAndParseL2HTTPResponse("api/v1/liquidations", params, result)
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+
+// GetPnL retrieves profit/loss history for an account
+func (c *HTTPClient) GetPnL(accountIndex int64, marketId *uint8, startDate, endDate *string, auth string) (*PnLResponse, error) {
+	result := &PnLResponse{}
+	params := map[string]any{
+		"account_index": accountIndex,
+		"auth":          auth,
+	}
+	if marketId != nil {
+		params["market_id"] = *marketId
+	}
+	if startDate != nil {
+		params["start_date"] = *startDate
+	}
+	if endDate != nil {
+		params["end_date"] = *endDate
+	}
+	err := c.getAndParseL2HTTPResponse("api/v1/pnl", params, result)
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+
+// GetPositionFunding retrieves funding fee history for positions
+func (c *HTTPClient) GetPositionFunding(accountIndex int64, marketId *uint8, startTimestamp, endTimestamp *int64, limit *int32, auth string) (*PositionFundingResponse, error) {
+	result := &PositionFundingResponse{}
+	params := map[string]any{
+		"account_index": accountIndex,
+		"auth":          auth,
+	}
+	if marketId != nil {
+		params["market_id"] = *marketId
+	}
+	if startTimestamp != nil {
+		params["start_timestamp"] = *startTimestamp
+	}
+	if endTimestamp != nil {
+		params["end_timestamp"] = *endTimestamp
+	}
+	if limit != nil {
+		params["limit"] = *limit
+	}
+	err := c.getAndParseL2HTTPResponse("api/v1/positionFunding", params, result)
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+
+// GetPublicPools retrieves information about public liquidity pools
+func (c *HTTPClient) GetPublicPools(accountIndex *int64, auth *string) (*PublicPoolsResponse, error) {
+	result := &PublicPoolsResponse{}
+	params := map[string]any{}
+	if accountIndex != nil {
+		params["account_index"] = *accountIndex
+	}
+	if auth != nil {
+		params["auth"] = *auth
+	}
+	err := c.getAndParseL2HTTPResponse("api/v1/publicPools", params, result)
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+
+// GetPublicPoolsMetadata retrieves metadata for public liquidity pools
+func (c *HTTPClient) GetPublicPoolsMetadata(poolIndex *int64) (*PublicPoolsMetadataResponse, error) {
+	result := &PublicPoolsMetadataResponse{}
+	params := map[string]any{}
+	if poolIndex != nil {
+		params["pool_index"] = *poolIndex
+	}
+	err := c.getAndParseL2HTTPResponse("api/v1/publicPoolsMetadata", params, result)
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+
+// ChangeAccountTier changes the tier level of an account
+func (c *HTTPClient) ChangeAccountTier(accountIndex int64, newTier int32, auth string) (*ChangeAccountTierResponse, error) {
+	result := &ChangeAccountTierResponse{}
+	params := map[string]any{
+		"account_index": accountIndex,
+		"new_tier":      newTier,
+		"auth":          auth,
+	}
+	err := c.getAndParseL2HTTPResponse("api/v1/changeAccountTier", params, result)
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+
+// ============= Phase 3: Transaction History Methods =============
+
+// GetAccountTxs retrieves transaction history for an account
+func (c *HTTPClient) GetAccountTxs(accountIndex int64, startTimestamp, endTimestamp *int64, limit *int32, txType *int32, auth string) (*AccountTxsResponse, error) {
+	result := &AccountTxsResponse{}
+	params := map[string]any{
+		"account_index": accountIndex,
+		"auth":          auth,
+	}
+	if startTimestamp != nil {
+		params["start_timestamp"] = *startTimestamp
+	}
+	if endTimestamp != nil {
+		params["end_timestamp"] = *endTimestamp
+	}
+	if limit != nil {
+		params["limit"] = *limit
+	}
+	if txType != nil {
+		params["tx_type"] = *txType
+	}
+	err := c.getAndParseL2HTTPResponse("api/v1/accountTxs", params, result)
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+
+// GetBlockTxs retrieves all transactions in a specific block
+func (c *HTTPClient) GetBlockTxs(blockHeight int64, limit *int32) (*BlockTxsResponse, error) {
+	result := &BlockTxsResponse{}
+	params := map[string]any{
+		"block_height": blockHeight,
+	}
+	if limit != nil {
+		params["limit"] = *limit
+	}
+	err := c.getAndParseL2HTTPResponse("api/v1/blockTxs", params, result)
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+
+// GetDepositHistory retrieves deposit history for an account
+func (c *HTTPClient) GetDepositHistory(accountIndex int64, startTimestamp, endTimestamp *int64, limit *int32, auth string) (*DepositHistoryResponse, error) {
+	result := &DepositHistoryResponse{}
+	params := map[string]any{
+		"account_index": accountIndex,
+		"auth":          auth,
+	}
+	if startTimestamp != nil {
+		params["start_timestamp"] = *startTimestamp
+	}
+	if endTimestamp != nil {
+		params["end_timestamp"] = *endTimestamp
+	}
+	if limit != nil {
+		params["limit"] = *limit
+	}
+	err := c.getAndParseL2HTTPResponse("api/v1/deposit/history", params, result)
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+
+// GetTransferHistory retrieves transfer history for an account
+func (c *HTTPClient) GetTransferHistory(accountIndex int64, startTimestamp, endTimestamp *int64, limit *int32, auth string) (*TransferHistoryResponse, error) {
+	result := &TransferHistoryResponse{}
+	params := map[string]any{
+		"account_index": accountIndex,
+		"auth":          auth,
+	}
+	if startTimestamp != nil {
+		params["start_timestamp"] = *startTimestamp
+	}
+	if endTimestamp != nil {
+		params["end_timestamp"] = *endTimestamp
+	}
+	if limit != nil {
+		params["limit"] = *limit
+	}
+	err := c.getAndParseL2HTTPResponse("api/v1/transfer/history", params, result)
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+
+// GetWithdrawHistory retrieves withdrawal history for an account
+func (c *HTTPClient) GetWithdrawHistory(accountIndex int64, startTimestamp, endTimestamp *int64, limit *int32, auth string) (*WithdrawHistoryResponse, error) {
+	result := &WithdrawHistoryResponse{}
+	params := map[string]any{
+		"account_index": accountIndex,
+		"auth":          auth,
+	}
+	if startTimestamp != nil {
+		params["start_timestamp"] = *startTimestamp
+	}
+	if endTimestamp != nil {
+		params["end_timestamp"] = *endTimestamp
+	}
+	if limit != nil {
+		params["limit"] = *limit
+	}
+	err := c.getAndParseL2HTTPResponse("api/v1/withdraw/history", params, result)
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+
+// GetTx retrieves information about a specific transaction
+func (c *HTTPClient) GetTx(txHash string) (*SingleTxResponse, error) {
+	result := &SingleTxResponse{}
+	params := map[string]any{
+		"tx_hash": txHash,
+	}
+	err := c.getAndParseL2HTTPResponse("api/v1/tx", params, result)
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+
+// GetTxs retrieves multiple transactions based on criteria
+func (c *HTTPClient) GetTxs(startTimestamp, endTimestamp *int64, limit *int32, txType *int32, accountIndex *int64) (*TxsResponse, error) {
+	result := &TxsResponse{}
+	params := map[string]any{}
+	
+	if startTimestamp != nil {
+		params["start_timestamp"] = *startTimestamp
+	}
+	if endTimestamp != nil {
+		params["end_timestamp"] = *endTimestamp
+	}
+	if limit != nil {
+		params["limit"] = *limit
+	}
+	if txType != nil {
+		params["tx_type"] = *txType
+	}
+	if accountIndex != nil {
+		params["account_index"] = *accountIndex
+	}
+	
+	err := c.getAndParseL2HTTPResponse("api/v1/txs", params, result)
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+
+// ============= Phase 4: System Information Methods =============
+
+// GetSystemInfo retrieves general system information
+func (c *HTTPClient) GetSystemInfo() (*SystemInfoResponse, error) {
+	result := &SystemInfoResponse{}
+	err := c.getAndParseL2HTTPResponse("api/v1/info", map[string]any{}, result)
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+
+// GetSystemStatus retrieves current system status
+func (c *HTTPClient) GetSystemStatus() (*SystemStatusResponse, error) {
+	result := &SystemStatusResponse{}
+	err := c.getAndParseL2HTTPResponse("api/v1/status", map[string]any{}, result)
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+
+// GetWithdrawalDelay retrieves withdrawal delay information for an account
+func (c *HTTPClient) GetWithdrawalDelay(accountIndex int64, auth string) (*WithdrawalDelayResponse, error) {
+	result := &WithdrawalDelayResponse{}
+	params := map[string]any{
+		"account_index": accountIndex,
+		"auth":          auth,
+	}
+	err := c.getAndParseL2HTTPResponse("api/v1/withdrawalDelay", params, result)
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
+}
