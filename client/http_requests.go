@@ -649,11 +649,26 @@ func (c *HTTPClient) GetWithdrawHistory(accountIndex int64, startTimestamp, endT
 	return result, nil
 }
 
-// GetTx retrieves information about a specific transaction
+// GetTx retrieves information about a specific transaction by hash
 func (c *HTTPClient) GetTx(txHash string) (*SingleTxResponse, error) {
 	result := &SingleTxResponse{}
 	params := map[string]any{
-		"tx_hash": txHash,
+		"by":    "hash",   // Required field: specify lookup method
+		"value": txHash,   // Transaction hash value
+	}
+	err := c.getAndParseL2HTTPResponse("api/v1/tx", params, result)
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+
+// GetTxBySequenceIndex retrieves information about a specific transaction by sequence index
+func (c *HTTPClient) GetTxBySequenceIndex(sequenceIndex int64) (*SingleTxResponse, error) {
+	result := &SingleTxResponse{}
+	params := map[string]any{
+		"by":    "sequence_index",                       // Required field: specify lookup method
+		"value": strconv.FormatInt(sequenceIndex, 10),  // Sequence index as string
 	}
 	err := c.getAndParseL2HTTPResponse("api/v1/tx", params, result)
 	if err != nil {

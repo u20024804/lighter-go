@@ -49,6 +49,14 @@ func (s *LighterWebsocketPrivateService) Start(ctx context.Context, errHandler E
 	s.ctx, s.cancel = context.WithCancel(ctx)
 	s.errHandler = errHandler
 
+	// Set disconnect callback to notify error handler when connection is lost
+	s.wsClient.SetOnDisconnected(func() {
+		log.Println("[LighterWS] Private service WebSocket disconnected")
+		if s.errHandler != nil {
+			s.errHandler(fmt.Errorf("WebSocket connection lost"))
+		}
+	})
+
 	if err := s.wsClient.Connect(s.ctx); err != nil {
 		return fmt.Errorf("failed to connect websocket: %w", err)
 	}
