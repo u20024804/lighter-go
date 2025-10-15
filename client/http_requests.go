@@ -331,7 +331,7 @@ func (c *HTTPClient) GetRecentTrades(marketId uint8, limit *int32) (*RecentTrade
 func (c *HTTPClient) GetTrades(marketId *uint8, accountIndex *int64, startTimestamp, endTimestamp *int64, limit *int32, auth *string) (*TradesResponse, error) {
 	result := &TradesResponse{}
 	params := map[string]any{}
-	
+
 	if marketId != nil {
 		params["market_id"] = *marketId
 	}
@@ -350,7 +350,7 @@ func (c *HTTPClient) GetTrades(marketId *uint8, accountIndex *int64, startTimest
 	if auth != nil {
 		params["auth"] = *auth
 	}
-	
+
 	err := c.getAndParseL2HTTPResponse("api/v1/trades", params, result)
 	if err != nil {
 		return nil, err
@@ -650,11 +650,11 @@ func (c *HTTPClient) GetWithdrawHistory(accountIndex int64, startTimestamp, endT
 }
 
 // GetTx retrieves information about a specific transaction by hash
-func (c *HTTPClient) GetTx(txHash string) (*SingleTxResponse, error) {
-	result := &SingleTxResponse{}
+func (c *HTTPClient) GetTx(txHash string) (*TxInfo, error) {
+	result := &TxInfo{}
 	params := map[string]any{
-		"by":    "hash",   // Required field: specify lookup method
-		"value": txHash,   // Transaction hash value
+		"by":    "hash", // Required field: specify lookup method
+		"value": txHash, // Transaction hash value
 	}
 	err := c.getAndParseL2HTTPResponse("api/v1/tx", params, result)
 	if err != nil {
@@ -664,11 +664,11 @@ func (c *HTTPClient) GetTx(txHash string) (*SingleTxResponse, error) {
 }
 
 // GetTxBySequenceIndex retrieves information about a specific transaction by sequence index
-func (c *HTTPClient) GetTxBySequenceIndex(sequenceIndex int64) (*SingleTxResponse, error) {
-	result := &SingleTxResponse{}
+func (c *HTTPClient) GetTxBySequenceIndex(sequenceIndex int64) (*TxInfo, error) {
+	result := &TxInfo{}
 	params := map[string]any{
-		"by":    "sequence_index",                       // Required field: specify lookup method
-		"value": strconv.FormatInt(sequenceIndex, 10),  // Sequence index as string
+		"by":    "sequence_index",                     // Required field: specify lookup method
+		"value": strconv.FormatInt(sequenceIndex, 10), // Sequence index as string
 	}
 	err := c.getAndParseL2HTTPResponse("api/v1/tx", params, result)
 	if err != nil {
@@ -681,7 +681,7 @@ func (c *HTTPClient) GetTxBySequenceIndex(sequenceIndex int64) (*SingleTxRespons
 func (c *HTTPClient) GetTxs(startTimestamp, endTimestamp *int64, limit *int32, txType *int32, accountIndex *int64) (*TxsResponse, error) {
 	result := &TxsResponse{}
 	params := map[string]any{}
-	
+
 	if startTimestamp != nil {
 		params["start_timestamp"] = *startTimestamp
 	}
@@ -697,7 +697,7 @@ func (c *HTTPClient) GetTxs(startTimestamp, endTimestamp *int64, limit *int32, t
 	if accountIndex != nil {
 		params["account_index"] = *accountIndex
 	}
-	
+
 	err := c.getAndParseL2HTTPResponse("api/v1/txs", params, result)
 	if err != nil {
 		return nil, err
