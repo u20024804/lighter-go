@@ -6,11 +6,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/elliottech/lighter-go/client"
-	"github.com/elliottech/lighter-go/types"
 	curve "github.com/elliottech/poseidon_crypto/curve/ecgfp5"
 	schnorr "github.com/elliottech/poseidon_crypto/signature/schnorr"
 	"github.com/ethereum/go-ethereum/common/hexutil"
+	"github.com/u20024804/lighter-ex/client"
+	"github.com/u20024804/lighter-ex/types"
 )
 
 /*

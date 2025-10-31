@@ -3,9 +3,9 @@ package client
 import (
 	"fmt"
 
-	"github.com/elliottech/lighter-go/types"
-	"github.com/elliottech/lighter-go/types/txtypes"
 	schnorr "github.com/elliottech/poseidon_crypto/signature/schnorr"
+	"github.com/u20024804/lighter-ex/types"
+	"github.com/u20024804/lighter-ex/types/txtypes"
 )
 
 func (c *TxClient) GetChangePubKeyTransaction(tx *types.ChangePubKeyReq, ops *types.TransactOpts) (*txtypes.L2ChangePubKeyTxInfo, error) {

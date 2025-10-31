@@ -11,7 +11,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/elliottech/lighter-go/types/txtypes"
+	"github.com/u20024804/lighter-ex/types/txtypes"
 )
 
 func (c *HTTPClient) parseResultStatus(respBody []byte) error {
